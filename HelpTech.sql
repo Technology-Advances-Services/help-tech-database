@@ -175,9 +175,9 @@ CREATE TABLE jobs
 	address varchar(100) NOT NULL,
 	description varchar(200) NOT NULL,
 	time decimal(10,2) NULL,
-	labor_budget float NULL,
-	material_budget float NULL,
-	amount_final float NULL,
+	labor_budget decimal(10,2) NULL,
+	material_budget decimal(10,2) NULL,
+	amount_final decimal(10,2) NULL,
 	state varchar(20) NOT NULL
 
 	CONSTRAINT pk_job_id PRIMARY KEY (id),
@@ -306,10 +306,11 @@ BEGIN
 														  WHERE technicals_id = @technical_id)
 									   AND state = 'PENDIENTE')
 
-	SELECT agendas_id, SUM(amount_final) AS total_income,
-	COUNT(consumers_id) AS total_consumers_served,
-	SUM(time) AS total_work_time, 
-	@total_pendings_jobs AS total_pendings_jobs FROM jobs
+	SELECT agendas_id AS AgendasId,
+	SUM(amount_final) AS TotalIncome,
+	COUNT(consumers_id) AS TotalConsumersServed,
+	SUM(time) AS TotalWorkTime, 
+	@total_pendings_jobs AS TotalPendingsJobs FROM jobs
 	WHERE agendas_id = (SELECT id FROM agendas
 					   WHERE technicals_id = @technical_id)
 	AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
@@ -349,14 +350,14 @@ BEGIN
 							  AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
 							  AND state = 'PUBLICADO')
 		
-		SELECT agendas_id,
-		AVG(amount_final) AS average_income,
-		SUM(amount_final) AS total_income,
-		COUNT(consumers_id) AS total_consumers_served,
-		SUM(time) AS total_work_time,
-		@total_pendings_jobs AS total_pending_jobs,
-		@average_score AS average_score,
-		@total_reviews AS total_reviews FROM jobs
+		SELECT agendas_id AS AgendasId,
+		AVG(amount_final) AS AverageIncome,
+		SUM(amount_final) AS TotalIncome,
+		COUNT(consumers_id) AS TotalConsumersServed,
+		SUM(time) AS TotalWorkTime,
+		@total_pendings_jobs AS TotalPendingsJobs,
+		@average_score AS AverageScore,
+		@total_reviews AS TotalReviews FROM jobs
 		WHERE agendas_id = (SELECT id FROM agendas
 		                   WHERE technicals_id = @technical_id)
 		AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
@@ -380,14 +381,14 @@ BEGIN
 							  WHERE technicals_id = @technical_id
 							  AND state = 'PUBLICADO')
 		
-		SELECT agendas_id,
-		AVG(amount_final) AS average_income,
-		SUM(amount_final) AS total_income,
-		COUNT(consumers_id) AS total_consumers_served,
-		SUM(time) AS total_work_time,
-		@total_pendings_jobs AS total_pending_jobs,
-		@average_score AS average_score,
-		@total_reviews AS total_reviews FROM jobs
+		SELECT agendas_id AS AgendasId,
+		AVG(amount_final) AS AverageIncome,
+		SUM(amount_final) AS TotalIncome,
+		COUNT(consumers_id) AS TotalConsumersServed,
+		SUM(time) AS TotalWorkTime,
+		@total_pendings_jobs AS TotalPendingsJobs,
+		@average_score AS AverageScore,
+		@total_reviews AS TotalReviews FROM jobs
 		WHERE agendas_id = (SELECT id FROM agendas
 		                   WHERE technicals_id = @technical_id)
 		AND state = 'COMPLETADO'
@@ -412,10 +413,11 @@ BEGIN
 										  WHERE technicals_id = @technical_id
 										  AND score < 3)
 
-	SELECT technicals_id, AVG(score) AS average_score,
-	@total_positive_reviews AS total_positive_reviews,
-	@total_negative_reviews AS total_negative_reviews,
-	COUNT(consumers_id) AS total_consumers_reviews FROM reviews
+	SELECT technicals_id AS TechnicalsId,
+	AVG(score) AS AverageScore,
+	@total_positive_reviews AS TotalPositiveReviews,
+	@total_negative_reviews AS TotalNegativeReviews,
+	COUNT(consumers_id) AS TotalConsumersReviews FROM reviews
 	WHERE technicals_id = @technical_id
 	GROUP BY technicals_id
 
@@ -430,5 +432,134 @@ AS
 
 	INSERT INTO agendas(technicals_id, registration_date) VALUES
 	((SELECT inserted.id FROM inserted), GETDATE())
+
+GO
+CREATE TRIGGER tg_update_technical_state
+ON complaints FOR INSERT
+AS
+
+	SET NOCOUNT ON
+
+	DECLARE @technicals_id INT = (SELECT TOP 1 tbl_agendas.technicals_id FROM inserted AS tbl_inserted
+								  JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
+								  ON tbl_inserted.jobs_id = tbl_jobs.id
+								  JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+								  ON tbl_jobs.agendas_id = tbl_agendas.id
+								  WHERE tbl_inserted.sender = 'CONSUMIDOR')
+
+	DECLARE @total_complaints INT =
+	(SELECT COUNT(tbl_agendas.technicals_id) FROM complaints AS tbl_complaints
+	JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
+	ON tbl_complaints.jobs_id = tbl_jobs.id
+	JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+	ON tbl_jobs.agendas_id = tbl_agendas.id
+	WHERE tbl_agendas.technicals_id = @technicals_id)
+
+	IF (@total_complaints >= 3)
+	BEGIN
+
+		BEGIN TRY
+
+			BEGIN TRANSACTION
+
+			UPDATE technicals SET state = 'REPORTADO'
+			WHERE id = @technicals_id
+			AND state = 'INACTIVO'
+			OR state = 'ACTIVO'
+
+			COMMIT TRANSACTION
+
+		END TRY
+		BEGIN CATCH
+
+			ROLLBACK TRANSACTION
+
+		END CATCH
+
+	END
+
+GO
+CREATE TRIGGER tg_update_consumer_state
+ON complaints FOR INSERT
+AS
+
+	SET NOCOUNT ON
+
+	DECLARE @consumers_id INT =
+		(SELECT TOP 1 tbl_jobs.consumers_id FROM inserted AS tbl_inserted
+		JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
+		ON tbl_inserted.jobs_id = tbl_jobs.id
+		WHERE tbl_inserted.sender = 'TECNICO')
+
+	DECLARE @total_complaints INT =
+		(SELECT COUNT(tbl_jobs.consumers_id) FROM complaints AS tbl_complaints
+		JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
+		ON tbl_complaints.jobs_id = tbl_jobs.id
+		WHERE tbl_jobs.consumers_id = @consumers_id)
+
+	IF (@total_complaints >= 3)
+	BEGIN
+
+		BEGIN TRY
+
+			BEGIN TRANSACTION
+
+			UPDATE consumers SET state = 'REPORTADO'
+			WHERE id = @consumers_id
+			AND state = 'INACTIVO'
+			OR state = 'ACTIVO'
+
+			COMMIT TRANSACTION
+
+		END TRY
+		BEGIN CATCH
+
+			ROLLBACK TRANSACTION
+
+		END CATCH
+
+	END
+
+GO
+CREATE TRIGGER tg_register_data_chats_rooms
+ON jobs FOR INSERT
+AS
+
+	SET NOCOUNT ON
+
+	DECLARE @get_date DATETIME = GETDATE()
+
+	DECLARE @technicals_id INT =
+		(SELECT TOP 1 tbl_agendas.technicals_id FROM inserted AS tbl_inserted
+		JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+		ON tbl_inserted.agendas_id = tbl_agendas.id)
+
+	IF ((SELECT COUNT(*) AS Result FROM chats_members
+		WHERE technicals_id = @technicals_id
+		AND consumers_id = (SELECT inserted.consumers_id FROM inserted)) < 1)
+	BEGIN
+
+		BEGIN TRY
+
+			BEGIN TRANSACTION
+
+			INSERT INTO chats_rooms
+			VALUES (@get_date, 'ACTIVO')
+
+			INSERT INTO chats_members
+			VALUES ((SELECT id FROM chats_rooms
+					WHERE registration_date = @get_date), @technicals_id,
+			(SELECT inserted.consumers_id FROM inserted))
+
+			COMMIT TRANSACTION
+
+		END TRY
+		BEGIN CATCH
+
+			ROLLBACK TRANSACTION
+
+		END CATCH
+
+	END
 
 GO
