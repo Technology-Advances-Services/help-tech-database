@@ -101,9 +101,9 @@ The database comprises the following tables:
 - **address**: Address where the work was performed (VARCHAR 100).
 - **description**: Description of the job (VARCHAR 200).
 - **time**: Time spent on the job (DECIMAL 10, 2, NULLABLE).
-- **labor_budget**: Labor budget for the job (FLOAT, NULLABLE).
-- **material_budget**: Material budget for the job (FLOAT, NULLABLE).
-- **amount_final**: Final amount for the job (FLOAT, NULLABLE).
+- **labor_budget**: Labor budget for the job (DECIMAL 10, 2, NULLABLE).
+- **material_budget**: Material budget for the job (DECIMAL 10, 2, NULLABLE).
+- **amount_final**: Final amount for the job (DECIMAL 10, 2, NULLABLE).
 - **state**: State of the job ('DENEGADO', 'EN PROCESO', 'PENDIENTE', 'COMPLETADO') (CHECK).
 
 ### `reviews` Table
