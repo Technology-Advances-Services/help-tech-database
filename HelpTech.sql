@@ -6,7 +6,7 @@ GO
 
 CREATE TABLE departments
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	name varchar(50) NOT NULL
 
 	CONSTRAINT pk_department_id PRIMARY KEY (id)
@@ -14,7 +14,7 @@ CREATE TABLE departments
 GO
 CREATE TABLE districts
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	departments_id int NOT NULL,
 	name varchar(50) NOT NULL
 
@@ -26,7 +26,7 @@ CREATE TABLE districts
 GO
 CREATE TABLE specialties
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	name varchar(50) NOT NULL
 
 	CONSTRAINT pk_specialty_id PRIMARY KEY (id)
@@ -105,9 +105,9 @@ CREATE TABLE consumers_credentials
 GO
 CREATE TABLE memberships
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	name varchar(20) NOT NULL,
-	price decimal(10, 2) NOT NULL,
+	price decimal(10,2) NOT NULL,
 	policies varchar(200) NOT NULL,
 	state varchar(20) NOT NULL
 
@@ -118,7 +118,7 @@ CREATE TABLE memberships
 GO
 CREATE TABLE contracts
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	memberships_id int NOT NULL,
 	technicals_id int NULL,
 	consumers_id int NULL,
@@ -142,7 +142,7 @@ CREATE TABLE contracts
 GO
 CREATE TABLE criminals_records
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	technicals_id int NOT NULL,
 	file_url varchar(max) NOT NULL
 
@@ -154,7 +154,7 @@ CREATE TABLE criminals_records
 GO
 CREATE TABLE agendas
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	technicals_id int NOT NULL,
 	registration_date datetime NOT NULL
 
@@ -193,7 +193,7 @@ CREATE TABLE jobs
 GO
 CREATE TABLE reviews
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	technicals_id int NOT NULL,
 	consumers_id int NOT NULL,
 	shipping_date datetime NOT NULL,
@@ -216,7 +216,7 @@ CREATE TABLE reviews
 GO
 CREATE TABLE types_complaints
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	name varchar(50) NOT NULL
 
 	CONSTRAINT pk_type_complaint_id PRIMARY KEY (id)
@@ -224,7 +224,7 @@ CREATE TABLE types_complaints
 GO
 CREATE TABLE complaints
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	types_complaints_id int NOT NULL,
 	jobs_id int NOT NULL,
 	sender varchar(20) NOT NULL,
@@ -247,7 +247,7 @@ CREATE TABLE complaints
 GO
 CREATE TABLE chats_rooms
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	registration_date datetime NOT NULL,
 	state varchar(20) NOT NULL
 
@@ -274,7 +274,7 @@ CREATE TABLE chats_members
 GO
 CREATE TABLE chats
 (
-	id int identity (1,1) NOT NULL,
+	id int identity(1,1) NOT NULL,
 	chats_rooms_id int NOT NULL,
 	technicals_id int NULL,
 	consumers_id int NULL,
@@ -341,14 +341,14 @@ BEGIN
 								   AND state = 'PENDIENTE')
 		
 		SET @average_score = (SELECT AVG(score) FROM reviews
-							  WHERE technicals_id = @technical_id
-							  AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
-							  AND state = 'PUBLICADO')
+							 WHERE technicals_id = @technical_id
+							 AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
+							 AND state = 'PUBLICADO')
 		
 		SET @total_reviews = (SELECT COUNT(opinion) FROM reviews
-							  WHERE technicals_id = @technical_id
-							  AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
-							  AND state = 'PUBLICADO')
+							 WHERE technicals_id = @technical_id
+							 AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
+							 AND state = 'PUBLICADO')
 		
 		SELECT agendas_id AS AgendasId,
 		AVG(amount_final) AS AverageIncome,
@@ -374,12 +374,12 @@ BEGIN
 								   AND state = 'PENDIENTE')
 		
 		SET @average_score = (SELECT AVG(score) FROM reviews
-							  WHERE technicals_id = @technical_id
-							  AND state = 'PUBLICADO')
+							 WHERE technicals_id = @technical_id
+							 AND state = 'PUBLICADO')
 		
 		SET @total_reviews = (SELECT COUNT(opinion) FROM reviews
-							  WHERE technicals_id = @technical_id
-							  AND state = 'PUBLICADO')
+							 WHERE technicals_id = @technical_id
+							 AND state = 'PUBLICADO')
 		
 		SELECT agendas_id AS AgendasId,
 		AVG(amount_final) AS AverageIncome,
@@ -441,11 +441,11 @@ AS
 	SET NOCOUNT ON
 
 	DECLARE @technicals_id INT = (SELECT TOP 1 tbl_agendas.technicals_id FROM inserted AS tbl_inserted
-								  JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
-								  ON tbl_inserted.jobs_id = tbl_jobs.id
-								  JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
-								  ON tbl_jobs.agendas_id = tbl_agendas.id
-								  WHERE tbl_inserted.sender = 'CONSUMIDOR')
+								 JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
+								 ON tbl_inserted.jobs_id = tbl_jobs.id
+								 JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+								 ON tbl_jobs.agendas_id = tbl_agendas.id
+								 WHERE tbl_inserted.sender = 'CONSUMIDOR')
 
 	DECLARE @total_complaints INT =
 	(SELECT COUNT(tbl_agendas.technicals_id) FROM complaints AS tbl_complaints
@@ -562,4 +562,96 @@ AS
 
 	END
 
+GO
+
+-- DATA SCRIPT --
+
+INSERT INTO departments (name) VALUES
+('AMAZONAS'),
+('ANCASH'),
+('APURIMAC'),
+('AREQUIPA'),
+('AYACUCHO'),
+('CAJAMARCA'),
+('CALLAO'),
+('CUSCO'),
+('HUANCAVELICA'),
+('HUANUCO'),
+('ICA'),
+('JUNIN'),
+('LA LIBERTAD'),
+('LAMBAYEQUE'),
+('LIMA'),
+('LORETO'),
+('MADRE DE DIOS'),
+('MOQUEGUA'),
+('PASCO'),
+('PIURA'),
+('PUNO'),
+('SAN MARTIN'),
+('TACNA'),
+('TUMBES'),
+('UCAYALI');
+GO
+INSERT INTO districts (departments_id, name) VALUES
+(15, 'ANCON'),
+(15, 'ATE'),
+(15, 'BARRANCO'),
+(15, 'BREÑA'),
+(15, 'CARABAYLLO'),
+(15, 'CHACLACAYO'),
+(15, 'CHORRILLOS'),
+(15, 'CERCADO DE LIMA'),
+(15, 'CIENEGUILLA'),
+(15, 'COMAS'),
+(15, 'EL AGUSTINO'),
+(15, 'INDEPENDENCIA'),
+(15, 'JESUS MARIA'),
+(15, 'LA MOLINA'),
+(15, 'LA VICTORIA'),
+(15, 'LINCE'),
+(15, 'LOS OLIVOS'),
+(15, 'LURIGANCHO'),
+(15, 'LURIN'),
+(15, 'MAGDALENA DEL MAR'),
+(15, 'MAGDALENA VIEJA'),
+(15, 'MIRAFLORES'),
+(15, 'PACHACAMAC'),
+(15, 'PUCUSANA'),
+(15, 'PUEBLO LIBRE'),
+(15, 'PUENTE PIEDRA'),
+(15, 'PUNTA HERMOSA'),
+(15, 'PUNTA NEGRA'),
+(15, 'RIMAC'),
+(15, 'SAN BARTOLO'),
+(15, 'SAN BORJA'),
+(15, 'SAN ISIDRO'),
+(15, 'SAN JUAN DE LURIGANCHO'),
+(15, 'SAN JUAN DE MIRAFLORES'),
+(15, 'SAN LUIS'),
+(15, 'SAN MARTIN DE PORRES'),
+(15, 'SAN MIGUEL'),
+(15, 'SANTA ANITA'),
+(15, 'SANTA MARIA DEL MAR'),
+(15, 'SANTA ROSA'),
+(15, 'SANTIAGO DE SURCO'),
+(15, 'SURQUILLO'),
+(15, 'VILLA EL SALVADOR'),
+(15, 'VILLA MARIA DEL TRIUNFO');
+GO
+INSERT INTO specialties (name) VALUES 
+('GASFITERO'),
+('JARDINERO'),
+('ELECTRICISTA'),
+('CARPINTERO'),
+('PINTOR'),
+('ALBAÑIL'),
+('CERRAJERO'),
+('ELECTRÓNICO'),
+('FONTANERO'),
+('MECÁNICO');
+GO
+INSERT INTO memberships (name, price, policies, state) VALUES
+('FREE', 0, 'ESTA MEMBRESIA ES UNA PRUEBA GRATUITA DE 6 MESES DONDE TENDRA ACCESO A TODAS LAS FUNCIONALIDADES DE LA APLICACION.', 'VIGENTE'),
+('PREMIUN', 9.99, 'ESTA MEMBRESIA TIENE UNA VIGENCIA DE 6 MESES DONDE TENDRA ACCESO A TODAS LAS FUNCIONALIDADES DE LA APLICACION.', 'VIGENTE');
 GO
