@@ -209,7 +209,7 @@ CREATE TABLE reviews
 	CONSTRAINT fk_reviews_consumers_id FOREIGN KEY (consumers_id)
 	REFERENCES consumers(id),
 
-	CONSTRAINT chk_review_score CHECK (state IN (1, 2, 3, 4, 5)),
+	CONSTRAINT chk_review_score CHECK (score IN (1, 2, 3, 4, 5)),
 
 	CONSTRAINT chk_review_state CHECK (state IN ('REPORTADO', 'PUBLICADO'))
 )
@@ -240,7 +240,7 @@ CREATE TABLE complaints
 	CONSTRAINT fk_complaints_jobs_id FOREIGN KEY (jobs_id)
 	REFERENCES jobs(id),
 
-	CONSTRAINT chk_complaint_sender CHECK (state IN ('TECNICO', 'CONSUMIDOR')),
+	CONSTRAINT chk_complaint_sender CHECK (sender IN ('TECNICO', 'CONSUMIDOR')),
 
 	CONSTRAINT chk_complaint_state CHECK (state IN ('ENTREGADO', 'LEIDO'))
 )
