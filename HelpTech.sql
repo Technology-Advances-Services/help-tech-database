@@ -407,21 +407,33 @@ CREATE PROCEDURE sp_review_statistic
 AS
 BEGIN
 
-	DECLARE @total_positive_reviews int = (SELECT COUNT(consumers_id) FROM reviews
-										  WHERE technicals_id = @technical_id
-										  AND score >= 3)
-
-	DECLARE @total_negative_reviews int = (SELECT COUNT(consumers_id) FROM reviews
-										  WHERE technicals_id = @technical_id
-										  AND score < 3)
-
-	SELECT technicals_id AS TechnicalsId,
-	AVG(score) AS AverageScore,
-	@total_positive_reviews AS TotalPositiveReviews,
-	@total_negative_reviews AS TotalNegativeReviews,
-	COUNT(consumers_id) AS TotalConsumersReviews FROM reviews
-	WHERE technicals_id = @technical_id
-	GROUP BY technicals_id
+	DECLARE @average_score nvarchar(MAX) = (SELECT AVG(score) FROM reviews
+											WHERE technicals_id = @technical_id)
+	DECLARE @columns nvarchar(MAX)
+	DECLARE @query nvarchar(MAX)
+	
+	SELECT @columns = STRING_AGG(QUOTENAME(score), ',') FROM
+	(
+		SELECT score FROM reviews
+		WHERE technicals_id = @technical_id
+		AND YEAR(reviews.shipping_date) = YEAR(GETDATE())
+	
+	) AS c
+	SET @query = '
+	
+	SELECT ' + @average_score + ' AS AverageScore, ' + @columns + ' FROM
+	(
+		SELECT score FROM reviews
+		WHERE technicals_id = ' + CAST(@technical_id AS nvarchar) + '
+		AND YEAR(reviews.shipping_date) = YEAR(GETDATE())
+	) AS t
+	PIVOT
+	(
+		COUNT(score)
+		FOR score IN (' + @columns  + ')
+	) AS d'
+	
+	EXEC sp_executesql @query
 
 END
 GO
