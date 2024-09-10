@@ -414,7 +414,7 @@ BEGIN
 	
 	SELECT @columns = STRING_AGG(QUOTENAME(score), ',') FROM
 	(
-		SELECT score FROM reviews
+		SELECT DISTINCT score FROM reviews
 		WHERE technicals_id = @technical_id
 		AND YEAR(reviews.shipping_date) = YEAR(GETDATE())
 	
