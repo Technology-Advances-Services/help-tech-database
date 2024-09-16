@@ -122,6 +122,9 @@ CREATE TABLE contracts
 	memberships_id int NOT NULL,
 	technicals_id int NULL,
 	consumers_id int NULL,
+	name varchar(20) NOT NULL,
+	price decimal(10,2) NOT NULL,
+	policies varchar(200) NOT NULL,
 	start_date datetime NOT NULL,
 	final_date datetime NOT NULL,
 	state varchar(20) NOT NULL
@@ -304,9 +307,9 @@ AS
 BEGIN
 
 	DECLARE @total_pendings_jobs int = (SELECT COUNT(state) FROM jobs
-									   WHERE agendas_id = (SELECT id FROM agendas
-														  WHERE technicals_id = @technical_id)
-									   AND state = 'PENDIENTE')
+									    WHERE agendas_id = (SELECT id FROM agendas
+														    WHERE technicals_id = @technical_id)
+									    AND state = 'PENDIENTE')
 
 	SELECT agendas_id AS AgendasId,
 	SUM(amount_final) AS TotalIncome,
@@ -314,7 +317,7 @@ BEGIN
 	SUM(time) AS TotalWorkTime, 
 	@total_pendings_jobs AS TotalPendingsJobs FROM jobs
 	WHERE agendas_id = (SELECT id FROM agendas
-					   WHERE technicals_id = @technical_id)
+					    WHERE technicals_id = @technical_id)
 	AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
 	AND state = 'COMPLETADO'
 	GROUP BY agendas_id
@@ -337,20 +340,20 @@ BEGIN
 	BEGIN
 
 		SET @total_pendings_jobs = (SELECT COUNT(state) FROM jobs
-		                           WHERE agendas_id = (SELECT id FROM agendas
-													  WHERE technicals_id = @technical_id)
-								   AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
-								   AND state = 'PENDIENTE')
+		                            WHERE agendas_id = (SELECT id FROM agendas
+													    WHERE technicals_id = @technical_id)
+								    AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
+								    AND state = 'PENDIENTE')
 		
 		SET @average_score = (SELECT AVG(score) FROM reviews
-							 WHERE technicals_id = @technical_id
-							 AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
-							 AND state = 'PUBLICADO')
+							  WHERE technicals_id = @technical_id
+							  AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
+							  AND state = 'PUBLICADO')
 		
 		SET @total_reviews = (SELECT COUNT(opinion) FROM reviews
-							 WHERE technicals_id = @technical_id
-							 AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
-							 AND state = 'PUBLICADO')
+							  WHERE technicals_id = @technical_id
+							  AND FORMAT(shipping_date, 'MM') = FORMAT(GETDATE(), 'MM')
+							  AND state = 'PUBLICADO')
 		
 		SELECT agendas_id AS AgendasId,
 		AVG(amount_final) AS AverageIncome,
@@ -361,7 +364,7 @@ BEGIN
 		@average_score AS AverageScore,
 		@total_reviews AS TotalReviews FROM jobs
 		WHERE agendas_id = (SELECT id FROM agendas
-		                   WHERE technicals_id = @technical_id)
+		                    WHERE technicals_id = @technical_id)
 		AND FORMAT(work_date, 'MM') = FORMAT(GETDATE(), 'MM')
 		AND state = 'COMPLETADO'
 		GROUP BY agendas_id
@@ -371,17 +374,17 @@ BEGIN
 	BEGIN
 
 		SET @total_pendings_jobs = (SELECT COUNT(state) FROM jobs
-		                           WHERE agendas_id = (SELECT id FROM agendas
-													  WHERE technicals_id = @technical_id)
-								   AND state = 'PENDIENTE')
+		                            WHERE agendas_id = (SELECT id FROM agendas
+													    WHERE technicals_id = @technical_id)
+								    AND state = 'PENDIENTE')
 		
 		SET @average_score = (SELECT AVG(score) FROM reviews
-							 WHERE technicals_id = @technical_id
-							 AND state = 'PUBLICADO')
+							  WHERE technicals_id = @technical_id
+							  AND state = 'PUBLICADO')
 		
 		SET @total_reviews = (SELECT COUNT(opinion) FROM reviews
-							 WHERE technicals_id = @technical_id
-							 AND state = 'PUBLICADO')
+							  WHERE technicals_id = @technical_id
+							  AND state = 'PUBLICADO')
 		
 		SELECT agendas_id AS AgendasId,
 		AVG(amount_final) AS AverageIncome,
@@ -392,7 +395,7 @@ BEGIN
 		@average_score AS AverageScore,
 		@total_reviews AS TotalReviews FROM jobs
 		WHERE agendas_id = (SELECT id FROM agendas
-		                   WHERE technicals_id = @technical_id)
+		                    WHERE technicals_id = @technical_id)
 		AND state = 'COMPLETADO'
 		GROUP BY agendas_id
 
@@ -457,19 +460,19 @@ AS
 	SET NOCOUNT ON
 
 	DECLARE @technicals_id INT = (SELECT TOP 1 tbl_agendas.technicals_id FROM inserted AS tbl_inserted
-								 JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
-								 ON tbl_inserted.jobs_id = tbl_jobs.id
-								 JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
-								 ON tbl_jobs.agendas_id = tbl_agendas.id
-								 WHERE tbl_inserted.sender = 'CONSUMIDOR')
+								  JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
+								  ON tbl_inserted.jobs_id = tbl_jobs.id
+								  JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+								  ON tbl_jobs.agendas_id = tbl_agendas.id
+								  WHERE tbl_inserted.sender = 'CONSUMIDOR')
 
 	DECLARE @total_complaints INT =
 	(SELECT COUNT(tbl_agendas.technicals_id) FROM complaints AS tbl_complaints
-	JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
-	ON tbl_complaints.jobs_id = tbl_jobs.id
-	JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
-	ON tbl_jobs.agendas_id = tbl_agendas.id
-	WHERE tbl_agendas.technicals_id = @technicals_id)
+	 JOIN (SELECT id, agendas_id FROM jobs) AS tbl_jobs
+	 ON tbl_complaints.jobs_id = tbl_jobs.id
+	 JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+	 ON tbl_jobs.agendas_id = tbl_agendas.id
+	 WHERE tbl_agendas.technicals_id = @technicals_id)
 
 	IF (@total_complaints >= 3)
 	BEGIN
@@ -503,15 +506,15 @@ AS
 
 	DECLARE @consumers_id INT =
 		(SELECT TOP 1 tbl_jobs.consumers_id FROM inserted AS tbl_inserted
-		JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
-		ON tbl_inserted.jobs_id = tbl_jobs.id
-		WHERE tbl_inserted.sender = 'TECNICO')
+		 JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
+		 ON tbl_inserted.jobs_id = tbl_jobs.id
+		 WHERE tbl_inserted.sender = 'TECNICO')
 
 	DECLARE @total_complaints INT =
 		(SELECT COUNT(tbl_jobs.consumers_id) FROM complaints AS tbl_complaints
-		JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
-		ON tbl_complaints.jobs_id = tbl_jobs.id
-		WHERE tbl_jobs.consumers_id = @consumers_id)
+		 JOIN (SELECT id, agendas_id, consumers_id FROM jobs) AS tbl_jobs
+		 ON tbl_complaints.jobs_id = tbl_jobs.id
+		 WHERE tbl_jobs.consumers_id = @consumers_id)
 
 	IF (@total_complaints >= 3)
 	BEGIN
@@ -547,12 +550,12 @@ AS
 
 	DECLARE @technicals_id INT =
 		(SELECT TOP 1 tbl_agendas.technicals_id FROM inserted AS tbl_inserted
-		JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
-		ON tbl_inserted.agendas_id = tbl_agendas.id)
+		 JOIN (SELECT id, technicals_id FROM agendas) AS tbl_agendas
+		 ON tbl_inserted.agendas_id = tbl_agendas.id)
 
 	IF ((SELECT COUNT(*) AS Result FROM chats_members
-		WHERE technicals_id = @technicals_id
-		AND consumers_id = (SELECT inserted.consumers_id FROM inserted)) < 1)
+		 WHERE technicals_id = @technicals_id
+		 AND consumers_id = (SELECT inserted.consumers_id FROM inserted)) < 1)
 	BEGIN
 
 		BEGIN TRY
@@ -564,7 +567,7 @@ AS
 
 			INSERT INTO chats_members
 			VALUES ((SELECT id FROM chats_rooms
-					WHERE registration_date = @get_date), @technicals_id,
+					 WHERE registration_date = @get_date), @technicals_id,
 			(SELECT inserted.consumers_id FROM inserted))
 
 			COMMIT TRANSACTION
@@ -684,4 +687,22 @@ VALUES
 ('DAÑOS A HERRAMIENTAS O EQUIPOS'),
 ('SOLICITUD DE INFORMACIÓN PERSONAL'),
 ('GROSERÍAS O MALTRATO');
+GO
+INSERT technicals VALUES (76507123, 5, 13, 'https://firebasestorage.googleapis.com/v0/b/helptech-74d24.appspot.com/o/HelpTechAppWeb%2FTechnicals-Profiles%2FPerfil-76507123.jpg?alt=media&token=4c66558d-efb7-4427-8eb3-75923b924713', 'AARON ELIAS', 'ACUÑA ALARCON', 20, 'MASCULINO', 944935036, 'aaronacu893@hotmail.com', 'DISPONIBLE', 'ACTIVO')
+INSERT technicals_credentials VALUES (76507123, 'd5cm4GYWcjjeCEuccanXYw==DkuATTzQ4IxyHntNw8tSIw==')
+GO
+INSERT consumers VALUES (7403440, 16, 'https://firebasestorage.googleapis.com/v0/b/helptech-74d24.appspot.com/o/HelpTechAppWeb%2FConsumers-Profiles%2FPerfil-07403440.png?alt=media&token=6f4601cb-a875-45bb-a51d-2c01ecc60412', 'JENNY LUZ', 'ALARCON GRADOS', 46, 'FEMENINO', 940345981, 'jennylu@hotmail.com', 'ACTIVO')
+INSERT consumers_credentials VALUES (7403440, 'qL5peP9hZK0fXp9km+6Mcw==pFRyIIa5wArk9P3AYUR6XA==')
+GO
+INSERT contracts VALUES (1, NULL, 7403440, 'FREE', 0, 'ESTA MEMBRESIA ES UNA PRUEBA GRATUITA DE 6 MESES DONDE TENDRA ACCESO A TODAS LAS FUNCIONALIDADES DE LA APLICACION.', CAST('2024-08-26T17:23:27.693' AS DateTime), CAST('2025-02-26T17:23:27.693' AS DateTime), 'VIGENTE')
+INSERT contracts VALUES (1, 76507123, NULL, 'FREE', 0, 'ESTA MEMBRESIA ES UNA PRUEBA GRATUITA DE 6 MESES DONDE TENDRA ACCESO A TODAS LAS FUNCIONALIDADES DE LA APLICACION.', CAST('2024-08-21T22:17:33.750' AS DateTime), CAST('2025-02-21T22:17:33.750' AS DateTime), 'VIGENTE')
+GO
+INSERT jobs VALUES (1, 7403440, CAST('2024-08-26T17:45:16.933' AS DateTime), CAST('2024-08-27T01:06:00.250' AS DateTime), CAST('2024-09-03T03:03:34.393' AS DateTime), 'AV. CESAR CANEVARO 1435.', 'FUGA DE AGUA EN EL LAVADERO.', CAST(1.00 AS Decimal(10, 2)), CAST(30.00 AS Decimal(10, 2)), CAST(30.00 AS Decimal(10, 2)), CAST(60.00 AS Decimal(10, 2)), 'COMPLETADO')
+GO
+INSERT chats VALUES (1, NULL, 7403440, CAST('2024-08-26T17:48:00.087' AS DateTime), 'HOLA BUENAS TARDES.')
+INSERT chats VALUES (1, 76507123, NULL, CAST('2024-08-26T18:00:25.003' AS DateTime), 'DIGAME EN QUE LE PUEDO AYUDAR.')
+GO
+INSERT reviews VALUES (76507123, 7403440, CAST('2024-08-26T18:35:47.443' AS DateTime), 4, 'BUEN TRABAJO.', 'PUBLICADO')
+GO
+INSERT complaints VALUES (4, 1, 'CONSUMIDOR', CAST('2024-08-26T19:49:19.880' AS DateTime), 'EL TECNICO DEJO LA SOLUCION A MEDIAS DEBIDO A QUE SE LE PRESENTO UN IMPREVISTO.', 'ENTREGADO')
 GO
