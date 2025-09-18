@@ -514,6 +514,16 @@ AS
 	END
 
 GO
+CREATE TRIGGER tg_update_qr_technical_state
+ON qr_technicals FOR INSERT
+AS
+	SET NOCOUNT ON
+
+	UPDATE qr_technicals SET state = 'REEMPLAZADO'
+	WHERE id < (SELECT inserted.id FROM inserted)
+	AND technicals_id = (SELECT inserted.technicals_id FROM inserted)
+
+GO
 CREATE TRIGGER tg_update_consumer_state
 ON complaints FOR INSERT
 AS
@@ -722,4 +732,5 @@ INSERT reviews VALUES (76507123, 7403440, CAST('2024-08-26T18:35:47.443' AS Date
 GO
 INSERT complaints VALUES (4, 1, 'CONSUMIDOR', CAST('2024-08-26T19:49:19.880' AS DateTime), 'EL TECNICO DEJO LA SOLUCION A MEDIAS DEBIDO A QUE SE LE PRESENTO UN IMPREVISTO.', 'ENTREGADO')
 GO
+
 
