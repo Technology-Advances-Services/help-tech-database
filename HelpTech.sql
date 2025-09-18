@@ -71,6 +71,22 @@ CREATE TABLE technicals_credentials
 	REFERENCES technicals(id)
 )
 GO
+CREATE TABLE qr_technicals
+(
+	id int identity(1,1) NOT NULL,
+	technicals_id int NOT NULL,
+	registration_date datetime NOT NULL,
+	qr_url varchar(MAX) NOT NULL,
+	state varchar(20) NOT NULL
+
+	CONSTRAINT pk_qr_technical_id PRIMARY KEY (id),
+
+	CONSTRAINT fk_qr_technicals_technicals_id FOREIGN KEY (technicals_id)
+	REFERENCES technicals(id),
+
+	CONSTRAINT chk_qr_technical_state CHECK (state IN ('REEMPLAZADO', 'ACTIVO'))
+)
+GO
 CREATE TABLE consumers
 (
 	id int NOT NULL,
@@ -706,3 +722,4 @@ INSERT reviews VALUES (76507123, 7403440, CAST('2024-08-26T18:35:47.443' AS Date
 GO
 INSERT complaints VALUES (4, 1, 'CONSUMIDOR', CAST('2024-08-26T19:49:19.880' AS DateTime), 'EL TECNICO DEJO LA SOLUCION A MEDIAS DEBIDO A QUE SE LE PRESENTO UN IMPREVISTO.', 'ENTREGADO')
 GO
+
